@@ -1,82 +1,82 @@
 # Echo server program
+from os import error
+from datetime import datetime
 import socket
-import datetime
 import threading
-import time
-
-
-import http.server
-import socketserver
-
-
-
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
 ftpAttempts = list()
 
 webAttempts = list()
 
-print("----------------------------")
+class HoneyPotWebServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(bytes("<html><head><title>Found You</title></head>", "utf-8"))
+        self.wfile.write(bytes("<body>", "utf-8"))
+        self.wfile.write(bytes("<p>This is a Honey Pot</p>", "utf-8"))
+        self.wfile.write(bytes("</body></html>", "utf-8"))
 
-def startFTPthread(name):
-    print("Starting FTP server.... port 21")
-    HOST = ''                 # Symbolic name meaning all available interfaces
-    PORT = 21              # Arbitrary non-privileged port
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT))
-        s.listen(1)
-        conn, addr = s.accept()
-        with conn:
-            
-            dt = datetime.datetime.now()
-            connectionDetails = addr[0]
-            print(dt)
-            print(connectionDetails)
-            
-            ftpAttempts.append(dt + " " +connectionDetails)
-            
-            
-            
+
+
+def startFTPServer(name):   
+    host = '127.0.0.1'
+    port = 80
+    print('Starting a Honey Pot FTP Server on %s:%s\n'%(host, port))
+    s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((host, port))
+    s.listen()
+    conn, addr = s.accept()
+    now = datetime.now()
+    with conn:
             while True:
+                print ('Connection from: %s:%d' % (addr[0], addr[1]))
+                ftpAttempts.append(now.strftime("%d/%m/%Y %H:%M:%S") + addr[0] + " : "+ addr[1] )
+                conn.send(b"<h1>We see You !</h1>")
                 data = conn.recv(1024)
-                print(data)
-                if not data: break
+                if not data: 
+                    break
                 conn.sendall(data)
 
 
 def startWebServer(name):
-    print("starting web server...")
-    PORT = 80
+    host = "localhost"
+    port = 8080
+    print('Honey Pot Webserver is up on http://%s:%s\n'%(host, port))
+    webServer = HTTPServer((host, port), HoneyPotWebServer)
+    webServer.serve_forever()
 
-    Handler = http.server.SimpleHTTPRequestHandler
+def report_gen():
+    print(ftpAttempts)
 
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print("serving at port", PORT)
-        dt = datetime.datetime.now()
-        webAttempts.append(dt)
-        httpd.serve_forever()
+def menu():
 
+    print("------------------MENU-------------------")
+    print("Press 1 to Start and Monitor a FTP Server")
+    print("Press 2 to Start and Monitor a Web Server")
+    print("Press 3 to View Report")
 
-                
-                
-x = threading.Thread(target=startFTPthread, args=("Thread 1",))
+    choice = int(input())
 
-x.start()
+    if choice == 1:
+        x = threading.Thread(target=startFTPServer, args=("FTP Server",))
+        x.start()
+        menu()
+      
+    elif choice == 2:
+        x2 = threading.Thread(target=startWebServer, args=("Web Server",))
+        x2.start()
+        menu()
 
+    elif choice == 3:
+        x3 = threading.Thread(target=report_gen, args=("Honeypot Access Report",))
+        x3.start()
+        menu()
+    else:
+        menu()
 
-                
-x2 = threading.Thread(target=startWebServer, args=("Thread 2",))
-
-x2.start()
-
-
-
-# after 5 minutes, save all the outputs
-startTime = time.time()
-endTime = startTime + 30
-
-
-    
-    
-
-# start second thread...........
+if __name__ == '__main__':
+    menu()

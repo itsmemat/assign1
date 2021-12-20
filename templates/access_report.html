@@ -10,14 +10,19 @@
     }
 
     h2 {
-      color: blue;
+      color: rgb(19, 19, 211);
+      font-family: verdana;
+      font-size: 100%;
+      text-align: left;
+    }
+    h3 {
+      color: rgb(78, 78, 228);
       font-family: verdana;
       font-size: 100%;
       text-align: left;
     }
 
     table {
-      position: absolute;
       left: 0;
       right: 0;
       width: 100%;
@@ -62,6 +67,8 @@
   </div>
   <h2>{{ftp_access_text}}</h2>
   <h2>{{ftp_access_report.to_html()}}</h2>>
+  <h3>{{port_scan_text}}</h3>
+  <h3>{{port_scan_report.to_html()}}</h3>>
 </body>
 
 </html>
